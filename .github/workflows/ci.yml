@@ -1,0 +1,75 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  # Construit toute l'application, la démarre et la teste de bout en bout.
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Récupération du code de StageFlow
+        uses: actions/checkout@v4
+        with:
+          repository: khadidja-ahmat/StageFlow
+          path: stageflow
+      - name: Construction et démarrage de toute l'application
+        run: docker compose up -d --build
+      - name: Test de bout en bout
+        run: ./scripts/smoke-test.sh
+      - name: Données fictives de démonstration
+        run: ./scripts/seed.sh
+      - name: Journaux des conteneurs (en cas d'échec)
+        if: failure()
+        run: docker compose logs
+      - name: Arrêt
+        if: always()
+        run: docker compose down -v
+
+  # Publie les images sur GitHub Container Registry, uniquement sur la branche main.
+  publish:
+    runs-on: ubuntu-latest
+    needs: verify
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: khadidja-ahmat/StageFlow
+          path: stageflow
+      - id: src
+        name: Version de StageFlow utilisée
+        run: echo "sha=$(git -C stageflow rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Image backend
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.backend
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/backend:latest
+            ghcr.io/${{ github.repository }}/backend:stageflow-${{ steps.src.outputs.sha }}
+      - name: Image frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.frontend
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/frontend:latest
+            ghcr.io/${{ github.repository }}/frontend:stageflow-${{ steps.src.outputs.sha }}

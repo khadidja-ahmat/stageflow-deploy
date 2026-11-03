@@ -1,0 +1,8 @@
+.git
+.github
+scripts
+README.md
+stageflow/.git
+stageflow/target
+stageflow/frontend/node_modules
+stageflow/frontend/dist

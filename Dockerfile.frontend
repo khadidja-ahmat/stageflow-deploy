@@ -1,0 +1,13 @@
+# Étape 1 : build du frontend React avec Node
+FROM node:24-alpine AS build
+WORKDIR /build
+COPY stageflow/frontend/package*.json ./
+RUN npm ci
+COPY stageflow/frontend/ ./
+RUN npm run build
+
+# Étape 2 : nginx sert les fichiers statiques et redirige /api vers le backend
+FROM nginx:alpine
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /build/dist /usr/share/nginx/html
+EXPOSE 80

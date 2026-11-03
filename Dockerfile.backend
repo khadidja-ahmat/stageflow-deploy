@@ -1,0 +1,18 @@
+# Étape 1 : compilation du backend StageFlow avec Maven et un JDK 21
+FROM maven:3.9-eclipse-temurin-21 AS build
+WORKDIR /build
+COPY stageflow/pom.xml .
+RUN mvn -B -q dependency:go-offline
+COPY stageflow/src ./src
+RUN mvn -B -q package -DskipTests
+
+# Étape 2 : image finale légère, avec uniquement le JRE et le JAR
+FROM eclipse-temurin:21-jre
+WORKDIR /app
+RUN useradd --create-home appuser
+COPY --from=build /build/target/*.jar app.jar
+USER appuser
+# Le backend écoute par défaut sur 127.0.0.1 : dans un conteneur, il doit écouter sur toutes les interfaces.
+ENV SERVER_ADDRESS=0.0.0.0
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]

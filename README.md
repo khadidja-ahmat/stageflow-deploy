@@ -10,18 +10,19 @@ automatiquement. Le code de StageFlow est récupéré depuis son propre dépôt 
 
 ## Le pipeline
 
-```text
-git push ─▶ GitHub Actions
-              1. récupère le code de StageFlow
-              2. construit les images Docker (backend, frontend)
-              3. démarre toute l'application (MySQL + backend + frontend)
-              4. test de bout en bout : créer, lire, supprimer une candidature
-              5. branche main uniquement : publie les images sur ghcr.io
-```
+À chaque `git push`, GitHub Actions :
 
-```text
-Navigateur ─▶ [ frontend : nginx + React ] ─ /api ─▶ [ backend : Spring Boot ] ─▶ [ db : MySQL + volume ]
-```
+1. récupère le code de StageFlow ;
+2. construit les images Docker ;
+3. démarre l'application complète ;
+4. la teste : créer, lire et supprimer une candidature ;
+5. publie les images sur GitHub (branche `main` uniquement).
+
+L'application est composée de 3 parties :
+
+- **frontend** : le site (React, servi par nginx) ;
+- **backend** : l'API (Spring Boot) ;
+- **db** : la base de données (MySQL).
 
 | Fichier | Rôle |
 |---|---|
@@ -31,7 +32,7 @@ Navigateur ─▶ [ frontend : nginx + React ] ─ /api ─▶ [ backend : Sprin
 | `docker-compose.yml` | 3 services ; MySQL démarre d'abord (healthcheck), données persistantes (volume) |
 | `scripts/smoke-test.sh` | test de bout en bout, utilisé en local et dans la CI |
 | `scripts/seed.sh` | ajoute des candidatures **fictives** pour avoir une démo remplie |
-| `.github/workflows/ci.yml` | le pipeline ci-dessus |
+| `.github/workflows/ci.yml` | le pipeline décrit plus haut |
 
 ## Lancer en local
 

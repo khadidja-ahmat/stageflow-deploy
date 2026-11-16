@@ -1,0 +1,6 @@
+apiVersion: 1
+providers:
+  - name: Reservation de salles
+    type: file
+    options:
+      path: /var/lib/grafana/dashboards

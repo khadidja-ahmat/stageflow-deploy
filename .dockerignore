@@ -6,3 +6,8 @@ stageflow/.git
 stageflow/target
 stageflow/frontend/node_modules
 stageflow/frontend/dist
+
+backups
+grafana
+prometheus
+blackbox

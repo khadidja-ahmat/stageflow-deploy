@@ -1,0 +1,35 @@
+# Prometheus : toutes les 15 secondes, il va chercher les chiffres de chaque service.
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ["prometheus:9090"]
+
+  # trafic nginx
+  - job_name: nginx
+    static_configs:
+      - targets: ["nginx-exporter:9113"]
+
+  # base de données MySQL
+  - job_name: mysql
+    static_configs:
+      - targets: ["mysql-exporter:9104"]
+
+  # le site et l'API répondent-ils ?
+  - job_name: disponibilite
+    metrics_path: /probe
+    params:
+      module: [http_ok]
+    static_configs:
+      - targets:
+          - http://frontend:80/                    # le site (React)
+          - http://frontend:80/api/applications    # l'API, via nginx
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox:9115

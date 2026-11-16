@@ -1,0 +1,7 @@
+modules:
+  # le service répond s'il renvoie un code 200
+  http_ok:
+    prober: http
+    timeout: 5s
+    http:
+      valid_status_codes: [200]

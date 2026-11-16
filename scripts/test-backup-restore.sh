@@ -14,7 +14,7 @@ ID=$(echo "$RESPONSE" | sed -n 's/.*"id": *\([0-9]*\).*/\1/p')
 
 echo "2. Sauvegarde"
 "${RUN[@]}" /scripts/backup.sh
-FICHIER=$(ls -t backups/stageflow_*.sql.gz | head -1)
+FICHIER=$(find backups -name 'stageflow_*.sql.gz' -printf '%T@ %p\n' | sort -n | tail -1 | cut -d' ' -f2-)
 echo "   fichier : $FICHIER"
 
 echo "3. Suppression de la candidature (simulation d'une perte de données)"

@@ -24,6 +24,8 @@ jobs:
         run: docker compose up -d --build
       - name: Test de bout en bout
         run: ./scripts/smoke-test.sh
+      - name: Test de la sauvegarde et de la restauration
+        run: bash scripts/test-backup-restore.sh
       - name: Données fictives de démonstration
         run: ./scripts/seed.sh
       - name: Journaux des conteneurs (en cas d'échec)
@@ -33,10 +35,28 @@ jobs:
         if: always()
         run: docker compose down -v
 
+  # Vérifie les fichiers de configuration (supervision, sauvegardes, scripts).
+  configuration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Docker Compose valide (avec les profils supervision et sauvegarde)
+        run: docker compose --profile supervision --profile sauvegarde config -q
+      - name: Scripts shell valides
+        run: |
+          sudo apt-get install -y shellcheck
+          shellcheck scripts/*.sh
+      - name: Configuration Prometheus valide
+        run: |
+          docker run --rm --entrypoint promtool -v "$PWD/prometheus:/cfg:ro" \
+            prom/prometheus:v2.55.1 check config /cfg/prometheus.yml
+      - name: Tableau de bord Grafana (JSON) valide
+        run: python3 -m json.tool grafana/dashboards/stageflow.json > /dev/null
+
   # Publie les images sur GitHub Container Registry, uniquement sur la branche main.
   publish:
     runs-on: ubuntu-latest
-    needs: verify
+    needs: [verify, configuration]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
       contents: read
